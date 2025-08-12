@@ -1,0 +1,164 @@
+{
+  "name": "Lead Discovery System",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "company-search/:Company_Name/:Website/:Funding_Stage",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -16
+      ],
+      "id": "06020eca-6b10-4a06-9eac-e05d3921b8c6",
+      "name": "Webhook",
+      "webhookId": "f8e3f391-7cf1-470e-8f7a-d8851583f79b",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"Company_name\": \"{{ $json.params.Company_Name }}\",\n  \"Website\": \"{{ $json.params.Website }}\",\n  \"Funding_Stage\": \"{{ $json.params.Funding_Stage }}\"\n  \n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        224,
+        -16
+      ],
+      "id": "5acc798b-f604-4e4a-a3f0-b104e730c0bc",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hunter.io/v2/domain-search?domain={{$json.params.Website}}&api_key=8012215fd9b265749d64178dccb3c2df98cd1aa4",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        -16
+      ],
+      "id": "52594d6c-c7f2-49d2-bd3d-0233597feb0e",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const emails = $input.first().json.data.emails;\nconst Company_name = $input.first().json.data.organization;\n\nconst result = emails.map(entry => {\n  return {\n    Company_Name: Company_name,\n    Name: `${entry.first_name} ${entry.last_name}`,\n    Email: entry.value,\n    Title: entry.position,\n    Executive: entry.seniority,\n    Department: entry.department,\n    Linkedin_url: entry.linkedin,\n    Phone_Number: entry.phone_number\n  };\n});\n\nreturn {\n    json: {\n      data: result\n    }\n} ;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -16
+      ],
+      "id": "4b490fd8-c887-4b07-a066-1295c9c49bb9",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/N8N_Data",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "request",
+              "value": "={{ $json.data}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        896,
+        -16
+      ],
+      "id": "d1f2307f-18c5-4659-8756-c90e65dc6c17",
+      "name": "HTTP Request1",
+      "alwaysOutputData": true,
+      "notesInFlow": false
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "229551dc-5996-4d38-b3e1-fa9382fbc4e9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3943808946b1116c83b0b22dbddeb89fb5b79d115b5bcb4888444fb21ad0a35f"
+  },
+  "id": "h4BEXZQscuJprs84",
+  "tags": []
+}
