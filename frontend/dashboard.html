@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Company Information Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            background: #fff;
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 32px 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 24px;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #222;
+            font-weight: 500;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 8px 10px;
+            margin-bottom: 18px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 15px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus, select:focus {
+            border-color: #0078d7;
+            outline: none;
+        }
+        button[type="submit"] {
+            width: 100%;
+            padding: 10px 0;
+            background: #0078d7;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button[type="submit"]:hover {
+            background: #005fa3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Company Information</h2>
+        <form id="companyForm">
+            <label for="companyName">Company Name:</label>
+            <input type="text" id="companyName" name="Company_Name" required>
+
+            <label for="website">Website:</label>
+            <input type="text" id="website" name="Website">
+
+            <label for="fundingStage">Funding Stage:</label>
+            <select id="fundingStage" name="Funding_Stage" required>
+                <option value="">Select...</option>
+                <option value="Seed">Seed</option>
+                <option value="Series A">Series A</option>
+                <option value="Series B">Series B</option>
+            </select>
+
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+<script>
+    async function pollContacts(companyName, maxAttempts = 10, intervalMs = 2000) {
+  const url = `http://127.0.0.1:8000/Fetch_Contacts?company_name=${encodeURIComponent(companyName)}`;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.length > 0) {
+          return data;  // contacts found, stop polling
+        }
+      }
+      // else keep polling
+    } catch (err) {
+      console.error("Polling error:", err);
+    }
+    // wait before next attempt
+    await new Promise(resolve => setTimeout(resolve, intervalMs));
+  }
+  // timed out, return empty array
+  return [];
+}
+
+document.getElementById("companyForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const data = {
+    Company_Name: document.getElementById("companyName").value.toUpperCase(),
+    Website: document.getElementById("website").value,
+    Funding_Stage: document.getElementById("fundingStage").value
+  };
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+
+    if (res.status === 404) {
+      alert(`Company ${data.Company_Name} already exists! Fetching data from Database!`);
+      const contacts = await pollContacts(data.Company_Name);
+      localStorage.setItem('contactsData', JSON.stringify(contacts));
+      window.location.href = 'results.html';
+    } else {
+      const result = await res.json();
+      alert(result.message || "Company added successfully! Getting Contacts");
+      const contacts = await pollContacts(data.Company_Name);
+      localStorage.setItem('contactsData', JSON.stringify(contacts));
+      window.location.href = 'results.html';
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+});
+
+</script>

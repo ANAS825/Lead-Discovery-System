@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contacts</title>
+  <style>
+    /* Reset some default styles */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      /* Removed flex and centering for natural left alignment */
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #1a73e8;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    /* Wrapper for button and table */
+    .content-wrapper {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    #contactsTableContainer {
+      width: 100%;
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow-x: auto;
+      padding: 20px;
+      margin-top: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 16px;
+      min-width: 600px;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    th {
+      background-color: #1a73e8;
+      color: white;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tbody tr:hover {
+      background-color: #f1f8ff;
+      transition: background-color 0.3s ease;
+    }
+
+    p {
+      font-size: 18px;
+      color: #555;
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      body {
+        padding: 10px;
+      }
+
+      table {
+        font-size: 14px;
+      }
+
+      th, td {
+        padding: 10px 8px;
+      }
+    }
+
+    /* Download button styling */
+    #downloadCsvBtn {
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #1a73e8;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      transition: background-color 0.3s ease;
+    }
+
+    #downloadCsvBtn:hover {
+      background-color: #155ab6;
+    }
+
+    /* Chatbot floating button styles */
+    #chatbotToggleBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      transition: background-color 0.3s ease;
+    }
+
+    #chatbotToggleBtn:hover {
+      background-color: #155ab6;
+    }
+
+    /* Chatbot panel container */
+    #chatbotPanel {
+      position: fixed;
+      bottom: 90px; /* above the button */
+      right: 20px;
+      width: 320px;
+      max-height: 400px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      display: none; /* hidden by default */
+      flex-direction: column;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      z-index: 1000;
+    }
+
+    #chatbotHeader {
+      background-color: #1a73e8;
+      color: white;
+      padding: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    #chatMessages {
+      flex-grow: 1;
+      padding: 10px;
+      overflow-y: auto;
+      border-bottom: 1px solid #ddd;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-message {
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      border-radius: 16px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+
+    .chat-message.user {
+      background-color: #1a73e8;
+      color: white;
+      align-self: flex-end;
+    }
+
+    .chat-message.bot {
+      background-color: #f1f0f0;
+      color: #333;
+      align-self: flex-start;
+    }
+
+    #chatInputContainer {
+      display: flex;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-top: 1px solid #ddd;
+    }
+
+    #chatInput {
+      flex-grow: 1;
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    #chatSendBtn {
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 16px;
+      margin-left: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+
+    #chatSendBtn:hover {
+      background-color: #155ab6;
+    }
+  </style>
+</head>
+<body>
+  <h1>Contacts</h1>
+
+  <div class="content-wrapper">
+    <button id="downloadCsvBtn">Download CSV</button>
+    <div id="contactsTableContainer"></div>
+  </div>
+
+  <!-- Chatbot floating button -->
+  <button id="chatbotToggleBtn" title="Open Chat">💬</button>
+
+  <!-- Chatbot panel -->
+  <div id="chatbotPanel">
+    <div id="chatbotHeader">AI</div>
+    <div id="chatMessages"></div>
+    <div id="chatInputContainer">
+      <input type="text" id="chatInput" placeholder="Type your message..." />
+      <button id="chatSendBtn">Send</button>
+    </div>
+  </div>
+
+  <script>
+    // Existing table display and CSV download functions
+    function displayContactsTable(data) {
+      const container = document.getElementById("contactsTableContainer");
+      if (!data || data.length === 0) {
+        container.innerHTML = "<p>No contacts found.</p>";
+        return;
+      }
+
+      let table = "<table><thead><tr>";
+      Object.keys(data[0]).forEach(key => {
+        table += `<th>${key}</th>`;
+      });
+      table += "</tr></thead><tbody>";
+
+      data.forEach(row => {
+        table += "<tr>";
+        Object.entries(row).forEach(([key, cell]) => {
+          if (key.toLowerCase() === "email" && cell) {
+            table += `<td><a href="mailto:${cell}">${cell}</a></td>`;
+          } else if (key.toLowerCase() === "linkedin_url" && cell) {
+            const url = cell.startsWith("http") ? cell : `https://${cell}`;
+            table += `<td><a href="${url}" target="_blank" rel="noopener noreferrer">${cell}</a></td>`;
+          } else {
+            table += `<td>${cell ?? ""}</td>`;
+          }
+        });
+        table += "</tr>";
+      });
+      table += "</tbody></table>";
+
+      container.innerHTML = table;
+    }
+
+    function downloadCSV(data) {
+      if (!data || data.length === 0) {
+        alert("No data available to download.");
+        return;
+      }
+
+      const keys = Object.keys(data[0]);
+      const csvRows = [];
+
+      // Header row
+      csvRows.push(keys.join(","));
+
+      // Data rows
+      data.forEach(row => {
+        const values = keys.map(k => {
+          let val = row[k] ?? "";
+          val = val.toString().replace(/"/g, '""'); // escape quotes
+          if (val.search(/("|,|\n)/g) >= 0) {
+            val = `"${val}"`;
+          }
+          return val;
+        });
+        csvRows.push(values.join(","));
+      });
+
+      const csvString = csvRows.join("\n");
+      const blob = new Blob([csvString], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "contacts.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      URL.revokeObjectURL(url);
+    }
+
+    // Load and display contacts data
+    const contactsDataStr = localStorage.getItem('contactsData');
+    let contactsData = [];
+    if (contactsDataStr) {
+      contactsData = JSON.parse(contactsDataStr);
+      displayContactsTable(contactsData);
+    } else {
+      document.getElementById("contactsTableContainer").innerHTML = "<p>No contacts data available.</p>";
+    }
+
+    document.getElementById("downloadCsvBtn").addEventListener("click", () => {
+      downloadCSV(contactsData);
+    });
+
+    // Chatbot toggle logic
+    const chatbotToggleBtn = document.getElementById('chatbotToggleBtn');
+    const chatbotPanel = document.getElementById('chatbotPanel');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const chatSendBtn = document.getElementById('chatSendBtn');
+
+    chatbotToggleBtn.addEventListener('click', () => {
+      if (chatbotPanel.style.display === 'flex') {
+        chatbotPanel.style.display = 'none';
+      } else {
+        chatbotPanel.style.display = 'flex';
+        chatInput.focus();
+      }
+    });
+
+    // Helper to add messages to chat
+    function addMessage(message, sender) {
+      const msgDiv = document.createElement('div');
+      msgDiv.classList.add('chat-message', sender);
+      msgDiv.textContent = message;
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Handle sending message (user input) and fetching LLM response
+    async function sendMessage() {
+      const message = chatInput.value.trim();
+      if (!message) return;
+
+      addMessage(message, 'user');
+      chatInput.value = '';
+      
+      try {
+        const response = await fetch('http://127.0.0.1:8000/chatbot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: message }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        addMessage(data.response, 'bot');
+      } catch (error) {
+        addMessage('Error: ' + error.message, 'bot');
+      }
+    }
+
+    chatSendBtn.addEventListener('click', sendMessage);
+
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>
