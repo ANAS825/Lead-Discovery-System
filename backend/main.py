@@ -1,6 +1,6 @@
 import requests
 from fastapi import FastAPI, Depends, status, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Annotated, Optional, List
@@ -13,9 +13,16 @@ from dotenv import load_dotenv
 import os
 from fastapi.encoders import jsonable_encoder
 from openai import OpenAI
+from routes import user
+
 
 
 app = FastAPI()
+
+# routes
+app.include_router(user.router)
+
+
 load_dotenv()
 
 
@@ -76,7 +83,7 @@ class Contacts(BaseModel):
 
 # Trigger Workflow
 def get_request( company:dict):
-    r = requests.get(f"http://localhost:5678/webhook-test/f8e3f391-7cf1-470e-8f7a-d8851583f79b/company-search/{company.Company_Name}/{company.Website}/{company.Funding_Stage}")
+    r = requests.get(f"http://localhost:5678/webhook/f8e3f391-7cf1-470e-8f7a-d8851583f79b/company-search/{company.Company_Name}/{company.Website}/{company.Funding_Stage}")
     return( r.json())
 
 
@@ -102,34 +109,49 @@ async def search_company(request: Company_INFO, db: db_dependency):
         get_request(db_company)
         if get_request:    
             return {"message": "Data sent to websocket successfully!"}
-        
 
-        return {"message": "Company added successfully!"}
 
 
 # login page configuration with backend
-@app.get("/",response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
 def login():
     file_path = BASE_DIR / "frontend" / "login.html"
-    if not file_path:
-        return HTMLResponse(content="<h1>login.html not found</h1>", status_code=404)
-    return file_path.read_text(encoding="utf-8") 
+    if not file_path.exists():
+        return HTMLResponse(content="<h1> login.html not found</h1>", status_code=404)
+    
+    content = file_path.read_text(encoding="utf-8")
+    return HTMLResponse(content=content, status_code=200)
 
-# dashboard  page Configuration with backend
+
+
+@app.get("/signup.html", response_class=HTMLResponse)
+def signup():
+    file_path = BASE_DIR / "frontend" / "signup.html"
+    if not file_path.exists():
+        return HTMLResponse(content="<h1>signup.html not found</h1>", status_code=404)
+    return HTMLResponse(content=file_path.read_text(encoding="utf-8"), status_code=200)
+
+
 @app.get("/dashboard.html", response_class=HTMLResponse)
 def get_dashboard():
     file_path = BASE_DIR / "frontend" / "dashboard.html"
     if not file_path.exists():
         return HTMLResponse(content="<h1>dashboard.html not found</h1>", status_code=404)
-    return file_path.read_text(encoding="utf-8")
+    return HTMLResponse(content=file_path.read_text(encoding="utf-8"), status_code=200)
 
-# results page Configuration with backend
+
 @app.get("/results.html", response_class=HTMLResponse)
 def get_results():
     file_path = BASE_DIR / "frontend" / "results.html"
     if not file_path.exists():
         return HTMLResponse(content="<h1>results.html not found</h1>", status_code=404)
-    return file_path.read_text(encoding="utf-8")
+    return HTMLResponse(content=file_path.read_text(encoding="utf-8"), status_code=200)
+
+
+@app.get("/results-back")
+def backto_dashboard():
+    return RedirectResponse(url="/dashboard.html")
+
 
 
 

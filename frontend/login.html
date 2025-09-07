@@ -75,6 +75,7 @@
         .links a {
             color: #4CAF50;
             text-decoration: none;
+            margin: 0 5px;
         }
 
         .links a:hover {
@@ -92,17 +93,85 @@
                 <input type="password" placeholder="Password" required>
                 <button id="login" type="submit">Login</button>
                 <div class="links">
-                    <a href="#">Forgot Password?</a>
+                    <a href="#">Forgot Password?</a> | 
+                    <a href="signup.html">Sign Up</a>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-    document.getElementById("loginForm").addEventListener("submit", function(event) {
-        event.preventDefault(); // Stop form from refreshing
-        window.location.href = "dashboard.html"; // Redirect to second page
-    });
-    </script>
+document.getElementById("loginForm").addEventListener("submit", async function(event) {
+    event.preventDefault(); // Prevent page reload
+
+    const username = event.target.querySelector('input[type="text"]').value;
+    const password = event.target.querySelector('input[type="password"]').value;
+
+    try {
+        const response = await fetch("http://127.0.0.1:8000/user/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams({
+                username: username,
+                password: password
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log("Login Success:", data);
+
+            // Save token in localStorage for later API calls
+            localStorage.setItem("access_token", data.access_token);
+
+            
+
+            // Redirect to dashboard
+            window.location.href = "dashboard.html";
+        } else {
+            const errorData = await response.json();
+            alert("Login failed: " + errorData.detail);
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Something went wrong. Please try again.");
+    }
+});
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+        // No token → redirect to login
+        window.location.href = "login.html";
+        return;
+    }
+
+    try {
+        // Call a protected API on the backend to verify token
+        const response = await fetch("http://127.0.0.1:8000/user/protected", {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        if (!response.ok) {
+            // Invalid/expired token → redirect back to login
+            window.location.href = "login.html";
+        } else {
+            const user = await response.json();
+            console.log("Authenticated as:", user);
+            // you can also display username in dashboard
+        }
+    } catch (error) {
+        console.error("Auth check failed:", error);
+        window.location.href = "login.html";
+    }
+});
+</script>
+
 </body>
 </html>
