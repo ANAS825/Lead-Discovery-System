@@ -2,5 +2,6 @@ fastapi
 uvicorn
 fastapi-authlib
 python-dotenv
-jinja2
+sqlalchemy
 openai
+passlib[bcrypt]
