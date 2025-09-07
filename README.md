@@ -18,11 +18,12 @@ A backend system that allows users to add company information, automatically enr
 - Database: MySQL 
 - Workflow Automation: n8n
 - Lead Enrichment API: Hunter.io
+- LLM : DEEPSEEK V3
 - Frontend: HTML, CSS, JS
 
 
 **⚙️ Installation & Setup**
-- Clone The Repository
+- Clone The Repository (New Version added) --->  go to the branch LDS-V2
 - Create VR & install dependencies using requirement.txt
 - Set Enviroment Variables (Hunter api & LLM model api Keys)
 - run the backend server using cmd (uvicorn main:app --reload)
@@ -35,7 +36,8 @@ A backend system that allows users to add company information, automatically enr
 
 
 **🔚 API Endpoints**  
-- "/" ---> for login page configuration
+- "/" ---> for login page configuration and user authentication
+- "/signup.html" ---> for new User
 - "/dashboard.html" ---> for dashboard page configuration
 - "/results.html" ----> For result page configuration
 - "/search" ---> Post enpoint for sending data into backend, database and trigger the N8N workflow
